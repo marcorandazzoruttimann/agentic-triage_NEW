@@ -1,4 +1,32 @@
 .env
+.env.*
+!.env.example
+
 .venv/
-logs/
+venv/
+.python-version
+
+# Python bytecode / caches
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+.tox/
+
+# Packaging / builds
+*.egg-info/
+dist/
+build/
+
+# Logs / runtime outputs
+logs/
+*.log
