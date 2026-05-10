@@ -44,10 +44,10 @@ def _sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     sanitized = {}
 
     for key, value in payload.items():
-        if isinstance(value, str):
-            sanitized[key] = _redact_sensitive_data(value)
+        if isinstance(value, str):#controlla se il valore è una stringa semplice
+            sanitized[key] = _redact_sensitive_data(value)#se lo è la controlla con redact
         else:
-            sanitized[key] = value
+            sanitized[key] = value #se è un altro genere di valore lo copia
 
     return sanitized
 
