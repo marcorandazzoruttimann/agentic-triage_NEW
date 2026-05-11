@@ -2,6 +2,7 @@ from client import call_llm
 from prompts.triage_v2 import build_prompt
 from parsing.parser import parse_llm_output
 from tools.logger import log_event
+from schemas.ticket import TicketBase,Ticket
 
 
 def process_ticket(user_input: str):
@@ -17,8 +18,12 @@ def process_ticket(user_input: str):
     """
 
     try:
-        # 1. Log input
-        log_event("ticket_received", {"input": user_input})
+
+        #a - creare oggetto ticket con user input e status
+        base_ticket=TicketBase(domanda_grezza=user_input, status="OPEN")
+
+        # 1. Log input - modificare log per loggare anche status e uuid
+        log_event("ticket_received", {"input": base_ticket})
 
         # 2. Costruzione prompt
         prompt = build_prompt(user_input)
