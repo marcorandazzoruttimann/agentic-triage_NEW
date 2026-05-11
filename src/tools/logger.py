@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from typing import Any, Dict
+from schemas.ticket import TicketBase,Ticket
 
 
 LOG_FILE_PATH = os.path.join("logs", "activity.jsonl")
@@ -52,7 +53,7 @@ def _sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     return sanitized
 
 
-def log_event(event_type: str, payload: Dict[str, Any]) -> None:
+def log_event(event_type: str, payload: Dict[str, Any] | TicketBase) -> None:
     """
     Scrive un evento nel file JSONL.
 
@@ -66,10 +67,20 @@ def log_event(event_type: str, payload: Dict[str, Any]) -> None:
 
     _ensure_log_dir()
 
+    """
+    Rendo il log in grado di trattare anche Dict per resilienza con assegnazione data_to_log :
+    """
+
+    if isinstance(payload, TicketBase):
+        data_to_log = payload.model_dump()
+    else:
+        data_to_log = payload
+
     log_entry = {
         "timestamp": datetime.utcnow().isoformat(),
         "event_type": event_type,
-        "payload": _sanitize_payload(payload),
+        "status": data_to_log.get("status", "UNKNOWN"),
+        "payload": _sanitize_payload(data_to_log),
     }
 
     with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:

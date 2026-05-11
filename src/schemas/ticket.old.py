@@ -1,51 +1,53 @@
-import uuid
 from pydantic import BaseModel, Field, field_validator
 from typing import Literal
 
-# Tipi definiti con Literal (vincoli forti e leggibili)
+
+# Categorie consentite (vincolo forte)
 Category = Literal["IT", "BILLING", "SALES", "SECURITY"]
+
+# Priorità consentite
 Priority = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-TicketStatus = Literal["OPEN", "TRIAGED", "CLOSED"]
 
-class TicketBase(BaseModel):
-    """Dati iniziali del sistema."""
-    domanda_grezza: str = Field(..., description="Il testo originale inserito dall'utente")
-    status: TicketStatus = Field(default="OPEN", description="Stato iniziale del ticket")
 
-class Ticket(TicketBase):
-    """Modello finale arricchito dall'AI e dal sistema dopo il triage."""
-    # Campi generati dall'AI (mantenendo la tua sintassi Field)
+class Ticket(BaseModel):
+    """
+    Modello dati del ticket per il sistema di triage.
+    Questo schema rappresenta l'output finale dell'agente AI.
+    """
+
     categoria: Category = Field(
-        ..., 
+        ...,
         description="Categoria del ticket (IT, BILLING, SALES, SECURITY)"
     )
+
     priorita: Priority = Field(
-        ..., 
+        ...,
         description="Livello di priorità del ticket"
     )
+
     riassunto_breve: str = Field(
-        ..., 
+        ...,
         description="Riassunto sintetico (max 15 parole)"
     )
-    messaggio_originale: str = Field(
-        ..., 
-        description="Testo originale del ticket utente"
-    )
 
-    # Campo assegnato dal sistema DOPO l'LLM (come da consegna)
-    ticket_id: str = Field(
-        default=None, 
-        description="UUID assegnato post-triage"
+    messaggio_originale: str = Field(
+        ...,
+        description="Testo originale del ticket utente"
     )
 
     @field_validator("riassunto_breve")
     @classmethod
     def validate_riassunto_length(cls, value: str) -> str:
+        """
+        Valida che il riassunto non superi le 15 parole.
+        """
         word_count = len(value.strip().split())
         if word_count > 15:
-            raise ValueError(f"Il riassunto supera il limite di 15 parole ({word_count})")
+            raise ValueError(
+                f"Il riassunto supera il limite di 15 parole ({word_count})"
+            )
         return value
-    
+
     @field_validator("messaggio_originale")
     @classmethod
     def validate_messaggio_not_empty(cls, value: str) -> str:
