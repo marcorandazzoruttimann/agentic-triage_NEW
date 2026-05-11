@@ -1,5 +1,5 @@
 from client import call_llm
-from prompts.triage_v1 import build_prompt
+from prompts.triage_v2 import build_prompt
 from parsing.parser import parse_llm_output
 from tools.logger import log_event
 
@@ -50,16 +50,22 @@ def run_tests():
 
     test_cases = [
         # Scenario A — IT (Urgente)
-        "Non riesco ad accedere alla mia email, è bloccata",
+        #"Non riesco ad accedere alla mia email, è bloccata",
 
         # Scenario B — Business
-        "Ho effettuato un bonifico, potete confermare?",
+        #"Ho effettuato un bonifico, potete confermare?",
 
         # Scenario C — Security
-        "Guadagna 5000 euro al mese con Bitcoin!!!",
+        #"Guadagna 5000 euro al mese con Bitcoin!!!",
 
         # Scenario D — Ambiguo
-        "Vorrei comprare il corso ma il sito non carica la pagina di pagamento"
+        #"Vorrei comprare il corso ma il sito non carica la pagina di pagamento",
+
+        # Scenario E — Ambiguo 2
+        #"Sto cercando l'opzione di rateizzazione del corso ma il menù a tendina non appare. E' un problema del mio browser?",
+
+        # Scenario F — Ambiguo 3
+        "Non sono riuscito a effettuare il bonifico sul vostro ecommerce di petfood per ricevere i bitcoin che il vostro collega mi ha promesso, potete controllare?"
     ]
 
     for i, test in enumerate(test_cases, start=1):
