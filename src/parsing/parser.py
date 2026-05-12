@@ -2,7 +2,7 @@ import json
 import re
 from typing import Any, Dict
 
-from schemas.ticket import Ticket
+from schemas.ticket import Ticket, TicketBase
 
 
 def _extract_json_block(text: str) -> str:
@@ -36,7 +36,7 @@ def _safe_json_load(json_str: str) -> Dict[str, Any]:
         raise ValueError(f"JSON non valido: {e}")
 
 
-def parse_llm_output(raw_output: str) -> Ticket:
+def parse_llm_output(raw_output: str, base_ticket: TicketBase) -> Ticket:
     """
     Pipeline completa di parsing:
 
@@ -59,9 +59,15 @@ def parse_llm_output(raw_output: str) -> Ticket:
     # 2. Converti in dict
     data = _safe_json_load(json_str)
 
-    # 3. Validazione schema
+    # 3. Arricchisce data per creazione ticket
+#    data_big= Ticket(
+#        **base_ticket.model_dump(),
+#        **data
+#    ).model_dump()
+    
+    # 4. Validazione schema
     try:
-        ticket = Ticket(**data)
+        ticket = Ticket(**base_ticket.model_dump(),**data)
     except Exception as e:
         raise ValueError(f"Errore validazione Ticket: {e}")
 

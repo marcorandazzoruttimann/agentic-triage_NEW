@@ -34,7 +34,7 @@ def process_ticket(user_input: str):
         log_event("llm_raw_response", {"response": raw_output})
 
         # 4. Parsing + validazione
-        ticket = parse_llm_output(raw_output)
+        ticket = parse_llm_output(raw_output, base_ticket)
 
         # 5. Log risultato strutturato
         log_event("ticket_processed", {"ticket": ticket.model_dump()})
