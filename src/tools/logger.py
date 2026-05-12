@@ -53,17 +53,11 @@ def _sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     return sanitized
 
 
-def log_event(event_type: str, payload: Dict[str, Any] | TicketBase) -> None:
-    """
-    Scrive un evento nel file JSONL.
-
-    Struttura:
-    {
-        "timestamp": "...",
-        "event_type": "...",
-        "payload": {...}
-    }
-    """
+def log_event(
+    event_type: str, 
+    payload: Dict[str, Any] | TicketBase, 
+    label: str = None
+) -> None:
 
     _ensure_log_dir()
 
@@ -72,12 +66,17 @@ def log_event(event_type: str, payload: Dict[str, Any] | TicketBase) -> None:
     """
 
     if isinstance(payload, TicketBase):
-        data_to_log = payload.model_dump()
+        # Se passo una label (es. "ticket"), creiamo {"ticket": {dati...}}
+        if label:
+            data_to_log = {label: payload.model_dump()}
+        else:
+            data_to_log = payload.model_dump()
     else:
+        # Se è già un dict, lo usiamo così com'è
         data_to_log = payload
 
     log_entry = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "event_type": event_type,
         "status": data_to_log.get("status", "UNKNOWN"),
         "payload": _sanitize_payload(data_to_log),

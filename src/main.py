@@ -23,7 +23,7 @@ def process_ticket(user_input: str):
         base_ticket=TicketBase(domanda_grezza=user_input, status="OPEN")
 
         # 1. Log input - modificare log per loggare anche status e uuid
-        log_event("ticket_received",  base_ticket)
+        log_event("ticket_received",  base_ticket, "input")
 
         # 2. Costruzione prompt
         prompt = build_prompt(user_input)
