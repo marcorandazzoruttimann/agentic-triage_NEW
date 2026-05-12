@@ -54,6 +54,9 @@ Il campo "riassunto_breve" deve:
 - descrivere il problema principale
 
 Il campo "messaggio_originale" deve essere IDENTICO all'input.
+
+NOTA: In caso di ambiguità nell'assegnazione della categoria, scegli secondo una logica di esclusione secondo questa domanda:
+"Quale categoria mi permette di escludere il possibie problema principale, appurato il quale, posso analizzare il problema secondario?"
 """
 
 
