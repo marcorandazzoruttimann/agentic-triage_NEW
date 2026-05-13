@@ -60,7 +60,8 @@ def assign_to_team(ticket: Ticket) -> TicketEnriched:
     enriched_data = {
         **ticket.model_dump(),
         "team": target_team,
-        "priorita_riassegnata": reassigned
+        "priorita_riassegnata": reassigned,
+        "status": "TRIAGED" #lo assegno qui per validarlo con pydantic
     }
 
     return TicketEnriched(**enriched_data)
