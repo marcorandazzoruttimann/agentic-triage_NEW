@@ -105,7 +105,7 @@ def build_prompt(user_input: str) -> str:
     for example in FEW_SHOTS:
         prompt += f"Input:\n{example['input']}\n"
        # prompt += f"Output:\n{example['output']}\n\n"
-        prompt += f"Output:\n{json.dumps(example['output'], ensure_ascii=False)}\n\n"
+        prompt += f"Output:\n{json.dumps(example['output'], ensure_ascii=False, default=str)}\n\n"
         
 
     prompt += "Ora analizza il seguente input:\n"

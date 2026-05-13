@@ -1,10 +1,11 @@
+import uuid
 from client import call_llm
 from prompts.triage_v2 import build_prompt
 from parsing.parser import parse_llm_output
 from tools.logger import log_event
 from schemas.ticket import TicketBase, Ticket, TicketEnriched
 from storage.store import save_ticket
-from tools.router import route_ticket
+from tools.router import assign_to_team
 
 
 
@@ -23,7 +24,7 @@ def process_ticket(user_input: str):
     try:
 
         #a - creare oggetto ticket con user input e status
-        base_ticket=TicketBase(domanda_grezza=user_input, status="OPEN")
+        base_ticket=TicketBase(domanda_grezza=user_input, status="OPEN",ticket_id=uuid.uuid4())
 
         #b - salvataggio domanda in data
         save_ticket(base_ticket, "arrivo richiesta")
@@ -49,14 +50,14 @@ def process_ticket(user_input: str):
         log_event("ticket_processed", {"ticket": ticket.model_dump()})
 
         #d - logica di routing ed enrichment -----------------------------
-        enriched_ticket = route_ticket(ticket)
+        enriched_ticket = assign_to_team(ticket)
 
         #d - salvataggio ulteriore in data ---------- da aggiornare con status
         save_ticket(enriched_ticket,"chiusura")
 
         # 6. Output finale
         print("\n=== TICKET PROCESSATO ===")
-        print(ticket.model_dump())
+        print(enriched_ticket.model_dump())
 
     except Exception as e:
         log_event("error", {"message": str(e), "input": user_input})

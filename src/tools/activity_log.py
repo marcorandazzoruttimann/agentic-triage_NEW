@@ -114,4 +114,4 @@ def log_event(event: str, **fields: Any) -> None:
 
     # JSONL: una riga per evento
     with path.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        f.write(json.dumps(payload, ensure_ascii=False, default=str) + "\n")

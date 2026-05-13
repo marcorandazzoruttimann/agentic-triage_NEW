@@ -83,4 +83,4 @@ def log_event(
     }
 
     with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+        f.write(json.dumps(log_entry, ensure_ascii=False, default=str) + "\n")

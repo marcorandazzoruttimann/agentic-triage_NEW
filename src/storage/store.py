@@ -40,6 +40,6 @@ def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]
     try:
         with open(STORAGE_FILE_PATH, "a", encoding="utf-8") as f:
             # ensure_ascii=False serve per gestire correttamente accenti e caratteri speciali
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
     except Exception as e:
         print(f"Errore critico durante il salvataggio su file: {e}")
