@@ -2,8 +2,10 @@ from client import call_llm
 from prompts.triage_v2 import build_prompt
 from parsing.parser import parse_llm_output
 from tools.logger import log_event
-from schemas.ticket import TicketBase,Ticket
+from schemas.ticket import TicketBase, Ticket, TicketEnriched
 from storage.store import save_ticket
+from tools.router import route_ticket
+
 
 
 def process_ticket(user_input: str):
@@ -46,8 +48,11 @@ def process_ticket(user_input: str):
         # 5. Log risultato strutturato
         log_event("ticket_processed", {"ticket": ticket.model_dump()})
 
+        #d - logica di routing ed enrichment -----------------------------
+        enriched_ticket = route_ticket(ticket)
+
         #d - salvataggio ulteriore in data ---------- da aggiornare con status
-        save_ticket(ticket,"chiusura")
+        save_ticket(enriched_ticket,"chiusura")
 
         # 6. Output finale
         print("\n=== TICKET PROCESSATO ===")

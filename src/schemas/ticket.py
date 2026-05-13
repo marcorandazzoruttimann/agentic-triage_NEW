@@ -1,6 +1,6 @@
 import uuid
 from pydantic import BaseModel, Field, field_validator
-from typing import Literal
+from typing import Literal, Optional
 
 # Tipi definiti con Literal (vincoli forti e leggibili)
 Category = Literal["IT", "BILLING", "SALES", "SECURITY"]
@@ -34,7 +34,7 @@ class Ticket(TicketBase):
     )
 
     # Campo assegnato dal sistema DOPO l'LLM (come da consegna)
-    ticket_id: str = Field(
+    ticket_id: Optional[str] = Field(
         default=None, 
         description="UUID assegnato post-triage"
     )

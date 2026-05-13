@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, Any, Union
-from schemas.ticket import Ticket, TicketBase
+from schemas.ticket import Ticket, TicketBase , TicketEnriched
 
 # Percorso di default per i log
 STORAGE_FILE_PATH = "data/tickets.jsonl"
@@ -11,7 +11,7 @@ def _ensure_dir():
     """Assicura che la cartella per i dati esista."""
     os.makedirs(os.path.dirname(STORAGE_FILE_PATH), exist_ok=True)
 
-def save_ticket(ticket: Union[Ticket, TicketBase, Dict[str, Any]], label: str = "update") -> None:
+def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]], label: str = "update") -> None:
     """
     Salva un'istantanea del ticket nel file JSONL.
     
