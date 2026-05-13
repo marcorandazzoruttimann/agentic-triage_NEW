@@ -5,7 +5,7 @@ from typing import Literal, Optional
 # Tipi definiti con Literal (vincoli forti e leggibili)
 Category = Literal["IT", "BILLING", "SALES", "SECURITY"]
 Priority = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-TicketStatus = Literal["OPEN", "TRIAGED", "CLOSED"]
+TicketStatus = Literal["OPEN", "TRIAGED"]
 Team = Literal["team_tecnico", "amministrazione", "commerciale", "sicurezza"]
 
 class TicketBase(BaseModel):
