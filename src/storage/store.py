@@ -1,45 +1,64 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict, Any, Union
-from schemas.ticket import Ticket, TicketBase , TicketEnriched
+from typing import Dict, Any, Union, List
+from schemas.ticket import Ticket, TicketBase, TicketEnriched
 
-# Percorso di default per i log
 STORAGE_FILE_PATH = "data/tickets.jsonl"
 
 def _ensure_dir():
-    """Assicura che la cartella per i dati esista."""
     os.makedirs(os.path.dirname(STORAGE_FILE_PATH), exist_ok=True)
 
 def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]], label: str = "update") -> None:
     """
-    Salva un'istantanea del ticket nel file JSONL.
-    
-    Ogni chiamata crea una nuova riga nel file, permettendo di tracciare 
-    l'evoluzione del ticket nel workflow.
+    Gestisce il salvataggio dei ticket:
+    - OPEN: Aggiunge una nuova riga (append).
+    - TRIAGED: Cerca il ticket_id e sovrascrive la riga esistente.
     """
     _ensure_dir()
 
-    # 1. Conversione in dizionario puro
-    if hasattr(ticket, "model_dump"):
-        # Se è un oggetto Pydantic (Ticket o TicketBase)
-        data = ticket.model_dump()
-    else:
-        # Se è un dizionario (per resilienza)
-        data = ticket
+    # 1. Preparazione dati (JSON-ready)
+    data = ticket.model_dump(mode="json") if hasattr(ticket, "model_dump") else ticket
+    ticket_id = str(data.get("ticket_id"))
+    current_status = data.get("status")
 
-    # 2. Arricchimento con metadati di scrittura
-    # Usiamo datetime.now().isoformat() per tracciare QUANDO è avvenuto il salvataggio
     entry = {
         "storage_timestamp": datetime.now().isoformat(),
         "workflow_step": label,
         "ticket_data": data
     }
 
-    # 3. Scrittura in modalità 'append' (a)
     try:
-        with open(STORAGE_FILE_PATH, "a", encoding="utf-8") as f:
-            # ensure_ascii=False serve per gestire correttamente accenti e caratteri speciali
-            f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+        if current_status == "TRIAGED" and os.path.exists(STORAGE_FILE_PATH):
+            # LOGICA DI SOVRASCRITTURA
+            updated_lines = []
+            found = False
+            
+            with open(STORAGE_FILE_PATH, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        line_data = json.loads(line)
+                        # Se l'ID coincide, carichiamo la nuova entry invece della vecchia
+                        if str(line_data.get("ticket_data", {}).get("ticket_id")) == ticket_id:
+                            updated_lines.append(json.dumps(entry, ensure_ascii=False))
+                            found = True
+                        else:
+                            updated_lines.append(line.strip())
+                    except json.JSONDecodeError:
+                        continue
+
+            # Se per qualche motivo il ticket_id non esisteva, lo aggiungiamo in coda
+            if not found:
+                updated_lines.append(json.dumps(entry, ensure_ascii=False))
+
+            # Riscrittura integrale del file
+            with open(STORAGE_FILE_PATH, "w", encoding="utf-8") as f:
+                f.write("\n".join(updated_lines) + "\n")
+        
+        else:
+            # LOGICA APPEND (Status OPEN o file inesistente)
+            with open(STORAGE_FILE_PATH, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
     except Exception as e:
         print(f"Errore critico durante il salvataggio su file: {e}")
