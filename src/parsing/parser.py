@@ -58,12 +58,6 @@ def parse_llm_output(raw_output: str, base_ticket: TicketBase) -> Ticket:
 
     # 2. Converti in dict
     data = _safe_json_load(json_str)
-
-    # 3. Arricchisce data per creazione ticket
-#    data_big= Ticket(
-#        **base_ticket.model_dump(),
-#        **data
-#    ).model_dump()
     
     # 4. Validazione schema
     try:
