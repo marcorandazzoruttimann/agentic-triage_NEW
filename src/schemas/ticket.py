@@ -34,9 +34,6 @@ class Ticket(TicketBase):
         description="Testo originale del ticket utente"
     )
 
-    # Campo assegnato dal sistema DOPO l'LLM (come da consegna)
-    
-        
 
     @field_validator("riassunto_breve")
     @classmethod
