@@ -3,6 +3,7 @@ from prompts.triage_v2 import build_prompt
 from parsing.parser import parse_llm_output
 from tools.logger import log_event
 from schemas.ticket import TicketBase,Ticket
+from storage.store import save_ticket
 
 
 def process_ticket(user_input: str):
@@ -22,6 +23,9 @@ def process_ticket(user_input: str):
         #a - creare oggetto ticket con user input e status
         base_ticket=TicketBase(domanda_grezza=user_input, status="OPEN")
 
+        #b - salvataggio domanda in data
+        save_ticket(base_ticket)
+
         # 1. Log input - modificare log per loggare anche status e uuid
         log_event("ticket_received",  base_ticket, "input")
 
@@ -36,8 +40,14 @@ def process_ticket(user_input: str):
         # 4. Parsing + validazione
         ticket = parse_llm_output(raw_output, base_ticket)
 
+        #c - salvataggio ulteriore in data  ---------- da aggiornare con status
+        save_ticket(ticket)
+
         # 5. Log risultato strutturato
         log_event("ticket_processed", {"ticket": ticket.model_dump()})
+
+        #d - salvataggio ulteriore in data ---------- da aggiornare con status
+        save_ticket(ticket)
 
         # 6. Output finale
         print("\n=== TICKET PROCESSATO ===")
