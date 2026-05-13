@@ -12,6 +12,7 @@ class TicketBase(BaseModel):
     """Dati iniziali del sistema."""
     domanda_grezza: str = Field(..., description="Il testo originale inserito dall'utente")
     status: TicketStatus = Field(default="OPEN", description="Stato iniziale del ticket")
+    ticket_id: uuid.UUID = Field(..., description="ID univoco")
 
 class Ticket(TicketBase):
     """Modello finale arricchito dall'AI e dal sistema dopo il triage."""
@@ -34,10 +35,7 @@ class Ticket(TicketBase):
     )
 
     # Campo assegnato dal sistema DOPO l'LLM (come da consegna)
-    ticket_id: Optional[str] = Field(
-        default=None, 
-        description="UUID assegnato post-triage"
-    )
+    
         
 
     @field_validator("riassunto_breve")
