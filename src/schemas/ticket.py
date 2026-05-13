@@ -6,6 +6,7 @@ from typing import Literal
 Category = Literal["IT", "BILLING", "SALES", "SECURITY"]
 Priority = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 TicketStatus = Literal["OPEN", "TRIAGED", "CLOSED"]
+Team = Literal["team_tecnico", "amministrazione", "commerciale", "sicurezza"]
 
 class TicketBase(BaseModel):
     """Dati iniziali del sistema."""
@@ -37,6 +38,7 @@ class Ticket(TicketBase):
         default=None, 
         description="UUID assegnato post-triage"
     )
+        
 
     @field_validator("riassunto_breve")
     @classmethod
@@ -55,3 +57,14 @@ class Ticket(TicketBase):
         if not value or not value.strip():
             raise ValueError("Il messaggio originale non può essere vuoto")
         return value
+    
+class TicketEnriched(Ticket):
+        team: Team = Field(
+        ..., 
+        description="Team di assegnazione"
+    )
+        priorita_riassegnata: Priority = Field(
+        ..., 
+        description="Priorita riassegnata deterministicamente"
+    )
+        
