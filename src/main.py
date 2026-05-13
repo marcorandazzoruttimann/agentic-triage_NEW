@@ -83,7 +83,10 @@ def run_tests():
         #"Sto cercando l'opzione di rateizzazione del corso ma il menù a tendina non appare. E' un problema del mio browser?",
 
         # Scenario F — Ambiguo 3
-        "Non sono riuscito a effettuare il bonifico sul vostro ecommerce di petfood per ricevere i bitcoin che il vostro collega mi ha promesso, potete controllare?"
+        #"Non sono riuscito a effettuare il bonifico sul vostro ecommerce di petfood per ricevere i bitcoin che il vostro collega mi ha promesso, potete controllare?",
+
+        # Scenario G — Oscuramento GDPR
+        "Fallisce il bonifico su iban IT60X0542811101000000123456 a nome di Luca Gambardella. E' urgente!"
     ]
 
     for i, test in enumerate(test_cases, start=1):

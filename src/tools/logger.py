@@ -1,84 +1,89 @@
 import json
 import os
+import re
+import uuid
 from datetime import datetime
-from typing import Any, Dict
-from schemas.ticket import TicketBase,Ticket
-
+from typing import Any, Dict, Union
+from schemas.ticket import TicketBase, Ticket, TicketEnriched
 
 LOG_FILE_PATH = os.path.join("logs", "activity.jsonl")
 
-
 def _ensure_log_dir():
-    """
-    Assicura che la cartella logs/ esista.
-    """
     os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
 
+def _is_uuid(text: str) -> bool:
+    """Controlla se una stringa è un UUID valido per evitarne l'oscuramento."""
+    try:
+        uuid.UUID(text)
+        return True
+    except ValueError:
+        return False
 
-def _redact_sensitive_data(text: str) -> str:
+def _redact_sensitive_data(value: Any) -> Any:
     """
-    Oscura informazioni sensibili nel testo.
-    Esempi:
-    - API keys (pattern base)
-    - token lunghi
+    Logica di oscuramento specifica con esclusione inizio frase.
     """
+    if not isinstance(value, str):
+        return value
 
-    if not isinstance(text, str):
-        return text
+    if _is_uuid(value):
+        return value
 
-    # Redazione semplice per API key OpenAI (sk-...)
-    text = text.replace("sk-", "sk-***")
+    # 1. API Keys e IBAN (logica precedente invariata)
+    value = value.replace("sk-", "sk-***")
+    iban_pattern = r'([A-Z]{2}[0-9]{2})[A-Z0-9]{10,26}([A-Z0-9]{2})'
+    value = re.sub(iban_pattern, r'\1***********\2', value, flags=re.IGNORECASE)
 
-    # Redazione generica per stringhe lunghe (token-like)
-    # Es: abcdefghijklmnopqrstuvwxyz123456 → abc***456
-    if len(text) > 20:
-        text = text[:3] + "***" + text[-3:]
+    # 2. Riconoscimento Nomi Propri con esclusione inizio frase/punteggiatura
+    # SPIEGAZIONE REGEX:
+    # (?<!^): Non all'inizio della riga
+    # (?<![.!?]\s): Non preceduto da . ! ? seguiti da uno spazio
+    # \b[A-Z][a-z]{2,9}\b: Parola con Maiuscola lunga 3-15 caratteri
+    
+    name_pattern = r'(?<!^)(?<![.!?]\s)\b[A-Z][a-z]{2,14}\b'
 
-    return text
+    def replace_name(match):
+        name = match.group(0)
+        return f"{name[0]}***{name[-1]}"
+    
+    value = re.sub(name_pattern, replace_name, value)
 
+    return value
 
-def _sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+def _sanitize_payload(payload: Any) -> Any:
     """
-    Applica redaction a tutti i campi stringa del payload.
+    Applica la sanificazione in modo RICORSIVO.
+    Funziona con dizionari nidificati, liste e stringhe.
     """
-
-    sanitized = {}
-
-    for key, value in payload.items():
-        if isinstance(value, str):#controlla se il valore è una stringa semplice
-            sanitized[key] = _redact_sensitive_data(value)#se lo è la controlla con redact
-        else:
-            sanitized[key] = value #se è un altro genere di valore lo copia
-
-    return sanitized
-
+    if isinstance(payload, dict):
+        return {k: _sanitize_payload(v) for k, v in payload.items()}
+    elif isinstance(payload, list):
+        return [_sanitize_payload(i) for i in payload]
+    elif isinstance(payload, str):
+        return _redact_sensitive_data(payload)
+    else:
+        return payload
 
 def log_event(
     event_type: str, 
-    payload: Dict[str, Any] | TicketBase, 
+    payload: Union[Dict[str, Any], TicketBase, Ticket, TicketEnriched],
     label: str = None
 ) -> None:
-
     _ensure_log_dir()
 
-    """
-    Rendo il log in grado di trattare anche Dict per resilienza con assegnazione data_to_log :
-    """
-
-    if isinstance(payload, TicketBase):
-        # Se passo una label (es. "ticket"), creiamo {"ticket": {dati...}}
-        if label:
-            data_to_log = {label: payload.model_dump()}
-        else:
-            data_to_log = payload.model_dump()
+    # Conversione in dict (gestendo Pydantic o dict puri)
+    if hasattr(payload, "model_dump"):
+        data_to_log = payload.model_dump(mode="json")
     else:
-        # Se è già un dict, lo usiamo così com'è
         data_to_log = payload
+
+    # Se c'è una label, inscatoliamo il payload
+    if label:
+        data_to_log = {label: data_to_log}
 
     log_entry = {
         "timestamp": datetime.now().isoformat(),
         "event_type": event_type,
-        "status": data_to_log.get("status", "UNKNOWN"),
         "payload": _sanitize_payload(data_to_log),
     }
 
