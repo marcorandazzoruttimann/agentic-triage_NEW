@@ -1,13 +1,9 @@
 from schemas.ticket import Ticket, TicketEnriched, Category, Team, Priority
+from priority_tables.table_v1 import PRIORITY_RULES
 
-# Configurazione Regole di Priorità
-PRIORITY_RULES = [
-    {"keywords": ["urgente", "bloccato", "sicurezza", "hacker"], "target": "HIGH", "type": "SET"},
-    {"keywords": ["subito", "non funziona", "errore"], "target": "MEDIUM", "type": "MINIMUM"},
-    {"keywords": ["down", "offline", "interruzione", "bitcoin"], "target": "CRITICAL", "type": "SET"},
-    {"keywords": ["informazione", "curiosità", "domanda"], "target": "LOW", "type": "SET"},
-]
-
+"""Le regole di priorità PRIORITY_RULES sono salvate in un file versionato a parte
+    per consentire rielaborazioni future concordate col cliente
+"""
 # Tabella di routing basata sulla categoria
 CATEGORY_TO_TEAM: dict[Category, Team] = {
     "IT": "team_tecnico",
@@ -45,7 +41,7 @@ def _calculate_reassigned_priority(text: str, current_priority: Priority) -> Pri
                 
     return new_priority
 
-def route_ticket(ticket: Ticket) -> TicketEnriched:
+def assign_to_team(ticket: Ticket) -> TicketEnriched:
     """
     Prende un Ticket e lo arricchisce con l'assegnazione al team 
     e la logica di priorità riassegnata.
