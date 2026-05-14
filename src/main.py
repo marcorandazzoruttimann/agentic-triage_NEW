@@ -1,5 +1,6 @@
+from __future__ import annotations
 import uuid
-from client import call_llm
+from tools.llm import call_llm
 from prompts.triage_v2 import build_prompt
 from parsing.parser import parse_llm_output
 from tools.logger import log_event
