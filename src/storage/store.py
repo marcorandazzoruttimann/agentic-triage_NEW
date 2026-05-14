@@ -3,11 +3,7 @@ import os
 from datetime import datetime
 from typing import Dict, Any, Union, List
 from schemas.ticket import Ticket, TicketBase, TicketEnriched
-
-STORAGE_FILE_PATH = "data/tickets.jsonl"
-
-def _ensure_dir():
-    os.makedirs(os.path.dirname(STORAGE_FILE_PATH), exist_ok=True)
+from config.config import STORAGE_FILE_PATH
 
 def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]], label: str = "update") -> None:
     """
@@ -15,8 +11,6 @@ def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]
     - OPEN: Aggiunge una nuova riga (append).
     - TRIAGED: Cerca il ticket_id e sovrascrive la riga esistente.
     """
-    _ensure_dir()
-
     # 1. Preparazione dati (JSON-ready)
     data = ticket.model_dump(mode="json") if hasattr(ticket, "model_dump") else ticket
     ticket_id = str(data.get("ticket_id"))
@@ -29,12 +23,12 @@ def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]
     }
 
     try:
-        if current_status == "TRIAGED" and os.path.exists(STORAGE_FILE_PATH):
+        if current_status == "TRIAGED" and STORAGE_FILE_PATH.exists():
             # LOGICA DI SOVRASCRITTURA
             updated_lines = []
             found = False
             
-            with open(STORAGE_FILE_PATH, "r", encoding="utf-8") as f:
+            with STORAGE_FILE_PATH.open("r", encoding="utf-8") as f:
                 for line in f:
                     try:
                         line_data = json.loads(line)
@@ -52,12 +46,12 @@ def save_ticket(ticket: Union[Ticket, TicketBase, TicketEnriched, Dict[str, Any]
                 updated_lines.append(json.dumps(entry, ensure_ascii=False))
 
             # Riscrittura integrale del file
-            with open(STORAGE_FILE_PATH, "w", encoding="utf-8") as f:
+            with STORAGE_FILE_PATH.open("w", encoding="utf-8") as f:
                 f.write("\n".join(updated_lines) + "\n")
         
         else:
             # LOGICA APPEND (Status OPEN o file inesistente)
-            with open(STORAGE_FILE_PATH, "a", encoding="utf-8") as f:
+            with STORAGE_FILE_PATH.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     except Exception as e:

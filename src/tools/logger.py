@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 import os
 import re
@@ -5,11 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Union
 from schemas.ticket import TicketBase, Ticket, TicketEnriched
-
-LOG_FILE_PATH = os.path.join("logs", "activity.jsonl")
-
-def _ensure_log_dir():
-    os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+from config.config import LOG_FILE_PATH
 
 def _is_uuid(text: str) -> bool:
     """Controlla se una stringa è un UUID valido per evitarne l'oscuramento."""
@@ -69,7 +66,7 @@ def log_event(
     payload: Union[Dict[str, Any], TicketBase, Ticket, TicketEnriched],
     label: str = None
 ) -> None:
-    _ensure_log_dir()
+   
 
     # Conversione in dict (gestendo Pydantic o dict puri)
     if hasattr(payload, "model_dump"):
@@ -87,5 +84,5 @@ def log_event(
         "payload": _sanitize_payload(data_to_log),
     }
 
-    with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
+    with LOG_FILE_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(log_entry, ensure_ascii=False, default=str) + "\n")

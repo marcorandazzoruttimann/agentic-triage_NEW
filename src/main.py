@@ -1,4 +1,5 @@
 from __future__ import annotations
+import config
 import uuid
 from tools.llm import call_llm
 from prompts.triage_v2 import build_prompt
