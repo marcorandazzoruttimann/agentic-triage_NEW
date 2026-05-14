@@ -58,6 +58,9 @@ def process_ticket(user_input: str):
         print("\n=== TICKET PROCESSATO ===")
         print(enriched_ticket.model_dump())
 
+        #e - log di chiusura
+        log_event("ticket_closed",  enriched_ticket, "output")
+
     except Exception as e:
         log_event("error", {"message": str(e), "input": user_input})
         print("\n[ERRORE]", str(e))
