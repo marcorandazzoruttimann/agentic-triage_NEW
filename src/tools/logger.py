@@ -1,76 +1,88 @@
+from __future__ import annotations
 import json
 import os
+import re
+import uuid
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Union
+from schemas.ticket import TicketBase, Ticket, TicketEnriched
+from config.config import LOG_FILE_PATH
 
+def _is_uuid(text: str) -> bool:
+    """Controlla se una stringa è un UUID valido per evitarne l'oscuramento."""
+    try:
+        uuid.UUID(text)
+        return True
+    except ValueError:
+        return False
 
-LOG_FILE_PATH = os.path.join("logs", "activity.jsonl")
-
-
-def _ensure_log_dir():
+def _redact_sensitive_data(value: Any) -> Any:
     """
-    Assicura che la cartella logs/ esista.
+    Logica di oscuramento specifica con esclusione inizio frase.
     """
-    os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
+    if not isinstance(value, str):
+        return value
 
+    if _is_uuid(value):
+        return value
 
-def _redact_sensitive_data(text: str) -> str:
+    # 1. API Keys e IBAN (logica precedente invariata)
+    value = value.replace("sk-", "sk-***")
+    iban_pattern = r'([A-Z]{2}[0-9]{2})[A-Z0-9]{10,26}([A-Z0-9]{2})'
+    value = re.sub(iban_pattern, r'\1***********\2', value, flags=re.IGNORECASE)
+
+    # 2. Riconoscimento Nomi Propri con esclusione inizio frase/punteggiatura
+    # SPIEGAZIONE REGEX:
+    # (?<!^): Non all'inizio della riga
+    # (?<![.!?]\s): Non preceduto da . ! ? seguiti da uno spazio
+    # \b[A-Z][a-z]{2,9}\b: Parola con Maiuscola lunga 3-15 caratteri
+    
+    name_pattern = r'(?<!^)(?<![.!?]\s)\b[A-Z][a-z]{2,14}\b'
+
+    def replace_name(match):
+        name = match.group(0)
+        return f"{name[0]}***{name[-1]}"
+    
+    value = re.sub(name_pattern, replace_name, value)
+
+    return value
+
+def _sanitize_payload(payload: Any) -> Any:
     """
-    Oscura informazioni sensibili nel testo.
-    Esempi:
-    - API keys (pattern base)
-    - token lunghi
+    Applica la sanificazione in modo RICORSIVO.
+    Funziona con dizionari nidificati, liste e stringhe.
     """
+    if isinstance(payload, dict):
+        return {k: _sanitize_payload(v) for k, v in payload.items()}
+    elif isinstance(payload, list):
+        return [_sanitize_payload(i) for i in payload]
+    elif isinstance(payload, str):
+        return _redact_sensitive_data(payload)
+    else:
+        return payload
 
-    if not isinstance(text, str):
-        return text
+def log_event(
+    event_type: str, 
+    payload: Union[Dict[str, Any], TicketBase, Ticket, TicketEnriched],
+    label: str = None
+) -> None:
+   
 
-    # Redazione semplice per API key OpenAI (sk-...)
-    text = text.replace("sk-", "sk-***")
+    # Conversione in dict (gestendo Pydantic o dict puri)
+    if hasattr(payload, "model_dump"):
+        data_to_log = payload.model_dump(mode="json")
+    else:
+        data_to_log = payload
 
-    # Redazione generica per stringhe lunghe (token-like)
-    # Es: abcdefghijklmnopqrstuvwxyz123456 → abc***456
-    if len(text) > 20:
-        text = text[:3] + "***" + text[-3:]
-
-    return text
-
-
-def _sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Applica redaction a tutti i campi stringa del payload.
-    """
-
-    sanitized = {}
-
-    for key, value in payload.items():
-        if isinstance(value, str):#controlla se il valore è una stringa semplice
-            sanitized[key] = _redact_sensitive_data(value)#se lo è la controlla con redact
-        else:
-            sanitized[key] = value #se è un altro genere di valore lo copia
-
-    return sanitized
-
-
-def log_event(event_type: str, payload: Dict[str, Any]) -> None:
-    """
-    Scrive un evento nel file JSONL.
-
-    Struttura:
-    {
-        "timestamp": "...",
-        "event_type": "...",
-        "payload": {...}
-    }
-    """
-
-    _ensure_log_dir()
+    # Se c'è una label, inscatoliamo il payload
+    if label:
+        data_to_log = {label: data_to_log}
 
     log_entry = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "event_type": event_type,
-        "payload": _sanitize_payload(payload),
+        "payload": _sanitize_payload(data_to_log),
     }
 
-    with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
-        f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+    with LOG_FILE_PATH.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(log_entry, ensure_ascii=False, default=str) + "\n")

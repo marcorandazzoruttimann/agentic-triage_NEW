@@ -30,4 +30,5 @@ build/
 
 # Logs / runtime outputs
 logs/
+data/
 *.log
