@@ -1,6 +1,29 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
+# --- 1. LOGICA DI CARICAMENTO AMBIENTE (Ex env.py) ---
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    raise RuntimeError(
+        "Dipendenza 'python-dotenv' non disponibile. Installa il progetto con le dipendenze."
+    )
+
+_ENV_LOADED = False
+
+def require_dotenv(dotenv_path: Path) -> None:
+    """Carica il file .env esattamente una volta, fallendo se manca."""
+    global _ENV_LOADED
+    if _ENV_LOADED:
+        return
+
+    if not dotenv_path.exists():
+        raise RuntimeError(
+            f"File .env mancante in ({dotenv_path}). Crealo (es. `cp .env.example .env`) prima di eseguire."
+        )
+
+    load_dotenv(dotenv_path=dotenv_path, override=False)
+    _ENV_LOADED = True
 
 # 1. Caricamento ambiente
 load_dotenv()

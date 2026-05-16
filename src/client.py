@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 from openai import OpenAI
 from typing import TYPE_CHECKING
-from config.env import require_dotenv
+from config.config import require_dotenv
 
 if TYPE_CHECKING:  # pragma: no cover
     from openai import OpenAI
@@ -11,12 +11,12 @@ if TYPE_CHECKING:  # pragma: no cover
 _CLIENT: "OpenAI | None" = None
 _OPENAI_CLS: type | None = None
 
-
+"""
 def _load_env() -> None:
-    """Carica `.env` tramite loader centralizzato (richiesto)."""
+    Carica `.env` tramite loader centralizzato (richiesto).
 
     require_dotenv()
-
+"""
 
 def get_default_model() -> str:
     """Ritorna il modello di default da usare per le chiamate OpenAI.
@@ -24,7 +24,7 @@ def get_default_model() -> str:
     Returns:
         Il valore di `OPENAI_MODEL` se presente, altrimenti un fallback sicuro.
     """
-    _load_env()
+    #_load_env()
     return os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
 
 
@@ -63,7 +63,7 @@ def get_openai_client() -> "OpenAI":
     if _CLIENT is not None:
         return _CLIENT
 
-    _load_env()
+    #_load_env()
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError(
